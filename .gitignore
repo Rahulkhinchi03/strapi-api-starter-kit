@@ -1,0 +1,297 @@
+# ================================
+# AI API Starter Kit - .gitignore
+# ================================
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+*.env
+config/secrets.json
+
+# API Keys & Credentials
+treblle-config.json
+api-keys.json
+secrets/
+credentials/
+
+# Node.js Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Strapi Files
+strapi-backend/.tmp/
+strapi-backend/build/
+strapi-backend/dist/
+strapi-backend/exports/
+strapi-backend/.cache/
+strapi-backend/public/uploads/*
+!strapi-backend/public/uploads/.gitkeep
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+data.db
+.tmp/
+backups/
+
+# Logs
+logs/
+*.log
+deployment_*.log
+error.log
+access.log
+
+# Runtime & Process Files
+*.pid
+*.pid.lock
+pids/
+
+# Coverage & Testing
+coverage/
+.nyc_output/
+test-results/
+.coverage
+
+# IDE & Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build & Distribution
+build/
+dist/
+out/
+.next/
+.nuxt/
+
+# Docker Files (keep Dockerfiles, ignore containers)
+docker-compose.override.yml
+.docker/
+
+# SSL Certificates (for security)
+ssl/
+certs/
+*.pem
+*.key
+*.crt
+*.cert
+
+# Temporary Files
+tmp/
+temp/
+.temp/
+*.tmp
+
+# AI Model Files (large files)
+models/
+*.bin
+*.safetensors
+ollama-data/
+
+# N8n Workflow Data
+n8n-data/
+workflows/local/
+
+# Monitoring & Analytics
+prometheus-data/
+grafana-data/
+metrics/
+
+# Deployment Artifacts
+deployment-*.zip
+releases/
+artifacts/
+
+# Cache Directories
+.cache/
+cache/
+.parcel-cache/
+
+# Documentation Build
+docs/build/
+.docusaurus/
+
+# Backup Files
+*.backup
+*.bak
+*~
+
+# Vendor Dependencies
+vendor/
+
+# Local Configuration
+local.json
+local.config.js
+
+# Test Files
+test-data/
+fixtures/
+
+# Scripts (keep scripts, ignore script outputs)
+script-outputs/
+*.output
+
+# Error Dumps
+*.dump
+crash.log
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Windows
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# Archive Files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Editor Backups
+*~
+.#*
+\#*#
+
+# Python (if using Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+ENV/
+
+# Ruby (if using Ruby scripts)
+.bundle/
+vendor/bundle/
+
+# Java (if using Java tools)
+*.class
+*.jar
+*.war
+
+# Go (if using Go tools)
+*.exe
+*.exe~
+
+# Rust (if using Rust tools)
+target/
+
+# C/C++ (if using native modules)
+*.o
+*.so
+*.dylib
+*.dll
+
+# Mobile Development
+*.ipa
+*.apk
+
+# Game Development
+*.unity
+*.unitypackage
+
+# Analytics & Tracking
+analytics/
+tracking/
+
+# Personal Notes
+notes/
+todo.txt
+README-personal.md
+
+# Local Scripts
+run-local.sh
+start-dev.sh
+my-*.sh
+
+# Configuration Overrides
+config.local.json
+settings.local.json
+
+# API Documentation Build
+api-docs/build/
+
+# Swagger/OpenAPI Generated
+swagger-codegen/
+openapi-generator/
+
+# Database Dumps
+*.dump
+*.sql.gz
+
+# Performance Profiling
+profile/
+*.prof
+
+# Load Testing Results
+load-test-results/
+artillery-results/
+
+# Security Scans
+security-scan-results/
+vulnerability-reports/
+
+# Compliance Reports
+compliance/
+audit-reports/
+
+# Third-party Integrations
+integrations/cache/
+webhooks/logs/
+
+# AI/ML Artifacts
+training-data/
+model-checkpoints/
+embeddings/
+vector-db/
+
+# Container Volumes
+volumes/
+data/
+
+# Kubernetes Secrets
+k8s-secrets/
+*.kubeconfig
+
+# Terraform State (if using Infrastructure as Code)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Ansible (if using for deployment)
+*.retry
+host_vars/
+group_vars/
+
+# CI/CD Artifacts
+.github/workflows/secrets/
+.gitlab-ci-cache/
+jenkins-workspace/
+
+# Monitoring Dashboards
+dashboards/exports/

@@ -1,0 +1,40 @@
+FROM node:18-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    build-base \
+    libc6-compat \
+    vips-dev \
+    curl
+
+# Set working directory
+WORKDIR /opt/app
+
+# Copy package files
+COPY strapi-backend/package*.json ./
+
+# Install dependencies
+RUN npm install --only=production
+
+# Copy source code
+COPY strapi-backend/ .
+
+# Create necessary directories
+RUN mkdir -p public/uploads .tmp
+
+# Set permissions
+RUN chown -R node:node /opt/app
+USER node
+
+# Build the application
+RUN npm run build
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:1337/_health || exit 1
+
+# Expose port
+EXPOSE 1337
+
+# Start the application
+CMD ["npm", "start"]

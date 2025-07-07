@@ -1,0 +1,266 @@
+{
+    "name": "AI API Analyzer Workflow",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "api-analysis",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "bb3e2bef-e1b3-4bc8-9a34-85fcad0e67ea",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          240,
+          300
+        ],
+        "webhookId": "api-analysis-webhook"
+      },
+      {
+        "parameters": {
+          "functionCode": "// Validate and process incoming webhook data\nconst inputData = $input.all();\nconst body = inputData[0].body;\n\n// Validation\nif (!body.input || !body.type) {\n  $response.json({\n    error: 'Missing required fields: input and type'\n  }, 400);\n  return [];\n}\n\n// Validate input type\nconst validTypes = ['endpoint', 'openapi_url', 'openapi_spec'];\nif (!validTypes.includes(body.type)) {\n  $response.json({\n    error: 'Invalid type. Must be one of: ' + validTypes.join(', ')\n  }, 400);\n  return [];\n}\n\n// Process input based on type\nlet processedInput = body.input;\nlet metadata = {\n  original_input: body.input,\n  input_type: body.type,\n  timestamp: new Date().toISOString(),\n  source: 'n8n_webhook'\n};\n\n// Additional processing for different input types\nif (body.type === 'endpoint') {\n  // Normalize endpoint format\n  if (!processedInput.match(/^(GET|POST|PUT|PATCH|DELETE)\\s+/i)) {\n    processedInput = 'GET ' + processedInput;\n  }\n  metadata.normalized = true;\n}\n\nif (body.type === 'openapi_url') {\n  // Validate URL format\n  try {\n    new URL(processedInput);\n    metadata.url_valid = true;\n  } catch (e) {\n    $response.json({\n      error: 'Invalid URL format'\n    }, 400);\n    return [];\n  }\n}\n\nreturn [{\n  json: {\n    input: processedInput,\n    type: body.type,\n    options: body.options || {},\n    metadata: metadata,\n    webhook_secret: $env.WEBHOOK_SECRET\n  }\n}];"
+        },
+        "id": "1e47c3af-d5d7-4b0c-8c6f-2a8b9c5e7d4f",
+        "name": "Process Input",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [
+          460,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "url": "={{ $env.STRAPI_BASE_URL }}/api/api-analysis/webhook",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": false,
+          "sendHeaders": false,
+          "sendBody": true,
+          "contentType": "json",
+          "body": "={{ JSON.stringify($json) }}",
+          "options": {
+            "timeout": 30000,
+            "retry": {
+              "enabled": true,
+              "maxTries": 3
+            }
+          }
+        },
+        "id": "2f58d4cb-f8e9-4ad1-bc7a-3e9f0c1d5a2b",
+        "name": "Call Strapi Analysis",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          680,
+          300
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "strapi-api-key",
+            "name": "Strapi API Key"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "functionCode": "// Process the AI analysis response\nconst responseData = $input.all();\nconst analysisResult = responseData[0].json;\n\n// Extract persona data\nconst persona = analysisResult.data || {};\n\n// Format response for different use cases\nconst formattedResponse = {\n  success: true,\n  analysis_id: persona.id || null,\n  input: persona.input || '',\n  input_type: persona.input_type || '',\n  \n  // Core persona data\n  persona: {\n    purpose: persona.persona?.purpose || 'Unknown',\n    audience: persona.persona?.audience || 'Unknown',\n    data_sensitivity: persona.persona?.dataSensitivity || 'medium',\n    auth_friction: persona.persona?.authenticationFriction || 'medium',\n    business_model: persona.persona?.businessModel || 'Unknown',\n    example_use_case: persona.persona?.exampleUseCase || 'Unknown'\n  },\n  \n  // Metadata\n  confidence_score: persona.confidence_score || 0,\n  model_used: persona.model_used || 'unknown',\n  processing_time: persona.processing_time || 0,\n  analyzed_at: new Date().toISOString(),\n  \n  // Full AI response for detailed analysis\n  ai_response: persona.ai_response || '',\n  \n  // N8n workflow metadata\n  workflow: {\n    execution_id: $execution.id,\n    workflow_id: $workflow.id,\n    node_name: $node.name\n  }\n};\n\n// Add recommendation based on analysis\nif (persona.persona) {\n  const p = persona.persona;\n  let recommendations = [];\n  \n  if (p.dataSensitivity === 'high') {\n    recommendations.push('Implement strong authentication and encryption');\n  }\n  \n  if (p.authenticationFriction === 'low') {\n    recommendations.push('Consider adding API key authentication for production use');\n  }\n  \n  if (p.businessModel === 'Internal') {\n    recommendations.push('Focus on developer experience and internal documentation');\n  }\n  \n  if (p.businessModel === 'Monetized') {\n    recommendations.push('Implement usage tracking and rate limiting');\n  }\n  \n  formattedResponse.recommendations = recommendations;\n}\n\nreturn [{ json: formattedResponse }];"
+        },
+        "id": "3a6b8e9f-c2d4-4f5e-a1b7-8d9c0e2f4a6b",
+        "name": "Format Response",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [
+          900,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "condition1",
+                "leftValue": "={{ $json.success }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equal"
+                }
+              }
+            ],
+            "combineOperation": "all"
+          },
+          "options": {}
+        },
+        "id": "4b7c9d0e-f3a5-4c6d-b2e8-9f0a1c3d5e7b",
+        "name": "Check Success",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify($json, null, 2) }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "name": "X-Powered-By",
+                  "value": "N8n + Treblle + Strapi"
+                }
+              ]
+            }
+          }
+        },
+        "id": "5c8d0e1f-a4b6-4d7e-c3f9-0a2b4c6d8e0f",
+        "name": "Success Response",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          1340,
+          220
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={\n  \"error\": \"Analysis failed\",\n  \"message\": \"{{ $json.error || 'Unknown error occurred' }}\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"workflow_execution_id\": \"{{ $execution.id }}\"\n}",
+          "responseCode": 500,
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Content-Type",
+                  "value": "application/json"
+                }
+              ]
+            }
+          }
+        },
+        "id": "6d9e1f2a-b5c7-4e8f-d4a0-1b3c5d7e9f1a",
+        "name": "Error Response",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          1340,
+          380
+        ]
+      },
+      {
+        "parameters": {
+          "functionCode": "// Send analysis result to external systems or databases\nconst analysisData = $input.all()[0].json;\n\n// Example: Send to Slack for team notifications\nif ($env.SLACK_WEBHOOK_URL && analysisData.persona) {\n  const slackMessage = {\n    text: `🤖 New API Analysis Completed`,\n    blocks: [\n      {\n        type: \"header\",\n        text: {\n          type: \"plain_text\",\n          text: \"🤖 API Analysis Results\"\n        }\n      },\n      {\n        type: \"section\",\n        fields: [\n          {\n            type: \"mrkdwn\",\n            text: `*Purpose:* ${analysisData.persona.purpose}`\n          },\n          {\n            type: \"mrkdwn\",\n            text: `*Audience:* ${analysisData.persona.audience}`\n          },\n          {\n            type: \"mrkdwn\",\n            text: `*Data Sensitivity:* ${analysisData.persona.data_sensitivity}`\n          },\n          {\n            type: \"mrkdwn\",\n            text: `*Business Model:* ${analysisData.persona.business_model}`\n          }\n        ]\n      },\n      {\n        type: \"section\",\n        text: {\n          type: \"mrkdwn\",\n          text: `*Confidence Score:* ${(analysisData.confidence_score * 100).toFixed(1)}%`\n        }\n      }\n    ]\n  };\n  \n  return [{\n    json: {\n      action: 'send_slack_notification',\n      data: slackMessage,\n      webhook_url: $env.SLACK_WEBHOOK_URL\n    }\n  }];\n}\n\n// Example: Send to database for analytics\nif ($env.ANALYTICS_WEBHOOK_URL) {\n  return [{\n    json: {\n      action: 'send_analytics',\n      data: {\n        event: 'api_analysis_completed',\n        properties: {\n          input_type: analysisData.input_type,\n          confidence_score: analysisData.confidence_score,\n          model_used: analysisData.model_used,\n          processing_time: analysisData.processing_time,\n          data_sensitivity: analysisData.persona?.data_sensitivity,\n          business_model: analysisData.persona?.business_model\n        },\n        timestamp: analysisData.analyzed_at\n      },\n      webhook_url: $env.ANALYTICS_WEBHOOK_URL\n    }\n  }];\n}\n\n// Default: just log the completion\nreturn [{\n  json: {\n    action: 'log_completion',\n    message: `Analysis completed for ${analysisData.input_type}: ${analysisData.input}`,\n    confidence: analysisData.confidence_score\n  }\n}];"
+        },
+        "id": "7e0f2a3b-c6d8-4f9a-e5b1-2c4d6e8f0a2c",
+        "name": "Send Notifications",
+        "type": "n8n-nodes-base.function",
+        "typeVersion": 1,
+        "position": [
+          1340,
+          100
+        ]
+      }
+    ],
+    "pinData": {},
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Process Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process Input": {
+        "main": [
+          [
+            {
+              "node": "Call Strapi Analysis",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call Strapi Analysis": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          [
+            {
+              "node": "Check Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Success": {
+        "main": [
+          [
+            {
+              "node": "Success Response",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Send Notifications",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Error Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "active": true,
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "versionId": "1",
+    "meta": {
+      "templateCredsSetupCompleted": true
+    },
+    "id": "api-analyzer-workflow",
+    "tags": [
+      {
+        "createdAt": "2024-12-07T10:00:00.000Z",
+        "updatedAt": "2024-12-07T10:00:00.000Z",
+        "id": "treblle-api-kit",
+        "name": "Treblle API Kit"
+      }
+    ]
+  }
