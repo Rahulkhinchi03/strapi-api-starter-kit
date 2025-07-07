@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "api_analyses",
+  "info": {
+    "singularName": "api-analysis",
+    "pluralName": "api-analyses",
+    "displayName": "API Analysis"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "input": {
+      "type": "text",
+      "required": true
+    },
+    "input_type": {
+      "type": "enumeration",
+      "enum": ["endpoint", "openapi_url", "openapi_spec"],
+      "required": true
+    },
+    "ai_response": {
+      "type": "text"
+    },
+    "confidence_score": {
+      "type": "decimal",
+      "min": 0,
+      "max": 1,
+      "default": 0.8
+    }
+  }
+}
